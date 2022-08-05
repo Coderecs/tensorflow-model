@@ -18,47 +18,53 @@ class RBMAlgorithm(AlgoBase):
     def fit(self, trainset):
         AlgoBase.fit(self, trainset)
 
-        numUsers = trainset.n_users
-        numItems = trainset.n_items
-        
-        trainingMatrix = np.zeros([numUsers, numItems, 10], dtype=np.float32)
+        self.numUsers = trainset.n_users
+        self.numItems = trainset.n_items
+        self.predictedRatings = np.full((self.numUsers, self.numItems), fill_value = np.float32(-1))
+        self.trainingMatrix = np.zeros([self.numUsers, self.numItems, 11], dtype=np.float32)
         
         for (uid, iid, rating) in trainset.all_ratings():
-            adjustedRating = int(float(rating)*2.0) - 1
-            trainingMatrix[int(uid), int(iid), adjustedRating] = 1
+            # adjustedRating = int(float(rating)*2.0) - 1
+            try:
+                self.trainingMatrix[int(uid), int(iid), int(rating)] = 1
+            except:
+                print(uid, iid, rating)
         
         # Flatten to a 2D array, with nodes for each possible rating type on each possible item, for every user.
-        trainingMatrix = np.reshape(trainingMatrix, [trainingMatrix.shape[0], -1])
+        self.trainingMatrix = np.reshape(self.trainingMatrix, [self.trainingMatrix.shape[0], -1])
         
         # Create an RBM with (num items * rating values) visible nodes
-        rbm = RBM(trainingMatrix.shape[1], hiddenDimensions=self.hiddenDim, learningRate=self.learningRate, batchSize=self.batchSize, epochs=self.epochs)
-        rbm.Train(trainingMatrix)
+        self.rbm = RBM(self.trainingMatrix.shape[1], hiddenDimensions=self.hiddenDim, learningRate=self.learningRate, batchSize=self.batchSize, epochs=self.epochs)
+        self.rbm.Train(self.trainingMatrix)
 
-        self.predictedRatings = np.zeros([numUsers, numItems], dtype=np.float32)
-        for uiid in range(trainset.n_users):
-            if (uiid % 50 == 0):
-                print("Processing user ", uiid)
-            recs = rbm.GetRecommendations([trainingMatrix[uiid]])
-            recs = np.reshape(recs, [numItems, 10])
-            
-            for itemID, rec in enumerate(recs):
-                # The obvious thing would be to just take the rating with the highest score:                
-                #rating = rec.argmax()
-                # ... but this just leads to a huge multi-way tie for 5-star predictions.
-                # The paper suggests performing normalization over K values to get probabilities
-                # and take the expectation as your prediction, so we'll do that instead:
-                normalized = self.softmax(rec)
-                rating = np.average(np.arange(10), weights=normalized)
-                self.predictedRatings[uiid, itemID] = (rating + 1) * 0.5
+    def predict_ratings(self, uiid):
+        # for uiid in range(trainset.n_users):
+        #     if (uiid % 50 == 0):
+        #         print("Processing user ", uiid)
+        recs = self.rbm.GetRecommendations([self.trainingMatrix[uiid]])
+        recs = np.reshape(recs, [self.numItems, 11])
+        
+        for itemID, rec in enumerate(recs):
+            # The obvious thing would be to just take the rating with the highest score:                
+            #rating = rec.argmax()
+            # ... but this just leads to a huge multi-way tie for 5-star predictions.
+            # The paper suggests performing normalization over K values to get probabilities
+            # and take the expectation as your prediction, so we'll do that instead:
+            normalized = self.softmax(rec)
+            rating = np.average(np.arange(11), weights=normalized)
+            self.predictedRatings[uiid, itemID] = (rating)
         
         return self
 
 
     def estimate(self, u, i):
-
+        u = self.trainset.to_inner_uid(u)
+        i = self.trainset.to_inner_iid(i) 
+         
         if not (self.trainset.knows_user(u) and self.trainset.knows_item(i)):
-            raise PredictionImpossible('User and/or item is unkown.')
-        
+            raise PredictionImpossible('User and/or item is unknown.')
+        if (self.predictedRatings[u, i] == -1):
+            self.predict_ratings(u)
         rating = self.predictedRatings[u, i]
         
         if (rating < 0.001):

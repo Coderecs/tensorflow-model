@@ -3,7 +3,7 @@ import tensorflow as tf
 
 class RBM(object):
 
-    def __init__(self, visibleDimensions, epochs=20, hiddenDimensions=50, ratingValues=10, learningRate=0.001, batchSize=100):
+    def __init__(self, visibleDimensions, epochs=20, hiddenDimensions=50, ratingValues=11, learningRate=0.001, batchSize=100):
 
         self.visibleDimensions = visibleDimensions
         self.epochs = epochs
@@ -25,6 +25,8 @@ class RBM(object):
             
             trX = np.array(X)
             for i in range(0, trX.shape[0], self.batchSize):
+                if (i % 3000 == 0):
+                    print(i)
                 epochX = trX[i:i+self.batchSize]
                 self.MakeGraph(epochX)
 
@@ -41,11 +43,14 @@ class RBM(object):
     def MakeGraph(self, inputUser):
         
         # Perform Gibbs Sampling for Contrastive Divergence, as per the paper we assume k=1 instead of iterating over the forward pass multiple times since it seems to work just fine
-        
+        # print()
         # Forward pass
         # Sample hidden layer given visible...
         # Get tensor of hidden probabilities
-        hProb0 = tf.nn.sigmoid(tf.matmul(inputUser, self.weights) + self.hiddenBias)
+        if (tf.shape(inputUser)[1] == tf.shape(self.weights)[0]):
+            hProb0 = tf.nn.sigmoid(tf.matmul(inputUser, self.weights) + self.hiddenBias)
+        else:
+            hProb0 = tf.nn.sigmoid(tf.matmul(inputUser, tf.transpose(self.weights)) + self.hiddenBias)
         # Sample from all of the distributions
         hSample = tf.nn.relu(tf.sign(hProb0 - tf.random.uniform(tf.shape(hProb0))))
         # Stitch it together
@@ -85,5 +90,5 @@ class RBM(object):
     
     def MakeVisible(self, feed):
         visible = tf.nn.sigmoid(tf.matmul(feed, tf.transpose(self.weights)) + self.visibleBias)
-        self.MakeGraph(feed)
+        # self.MakeGraph(feed)
         return visible

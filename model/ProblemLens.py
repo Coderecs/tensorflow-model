@@ -10,19 +10,19 @@ from collections import defaultdict
 
 class ProblemLens:
 
-    ratingsPath = '../ml-latest-small/ratings.csv'
-    problemsPath = '../ml-latest-small/problems.csv'
+    ratingsPath = 'ratings.csv'
+    problemsPath = 'problems.csv'
     
     def loadProblemLensLatestSmall(self):
         
         # Loads the dataset for the training purposes
 
         # Look for files relative to the directory we are running from
-        os.chdir(os.path.dirname(sys.argv[0]))
+        # os.chdir(os.path.dirname(sys.argv[0]))
 
         ratingsDataset = 0
 
-        reader = Reader(line_format='user problem rating timestamp', sep=',', skip_lines=1)
+        reader = Reader(line_format='user item rating timestamp', sep=',', skip_lines=1)
 
         ratingsDataset = Dataset.load_from_file(self.ratingsPath, reader=reader)
 
@@ -40,7 +40,7 @@ class ProblemLens:
                 userID = int(row[0])
                 if (user == userID):
                     problemID = int(row[1])
-                    rating = float(row[2])
+                    rating = float(row[3])
                     userRatings.append((problemID, rating))
                     hitUser = True
                 if (hitUser and (user != userID)):
@@ -73,8 +73,8 @@ class ProblemLens:
             problemReader = csv.reader(csvfile)
             next(problemReader)  #Skip header line
             for row in problemReader:
-                problemID = int(row[0])
-                tagList = row[2].split('|')
+                problemID = int(row[2])
+                tagList = row[-1].split('|')
                 tagIDList = []
                 for tag in tagList:
                     if tag in tagIDs:
@@ -102,10 +102,10 @@ class ProblemLens:
             problemReader = csv.reader(csvfile)
             next(problemReader)
             for row in problemReader:
-                problemID = int(row[0])
-                title = row[1]
-                m = p.search(title)
-                rating = m.group(1)
+                problemID = int(row[2])
+                # title = row[1]
+                # m = p.search(title)
+                rating = row[-2]
                 if rating:
                     ratings[problemID] = int(rating)
         return ratings
