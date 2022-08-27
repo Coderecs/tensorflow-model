@@ -58,8 +58,9 @@ class model(object):
 
 		print ("\nWe recommend:")
 		for problemID, estimatedRating in predictions:
-		    intProblemID = int(problemID)
-		    recommendations.append((intProblemID, estimatedRating))
+			intProblemID = int(problemID)
+			recommendations.append((intProblemID, estimatedRating))
+
 
 		recommendations.sort(key=lambda x: x[1], reverse=True)
 

@@ -3,7 +3,7 @@ import tensorflow as tf
 
 class RBM(object):
 
-    def __init__(self, visibleDimensions, epochs=20, hiddenDimensions=50, ratingValues=11, learningRate=0.001, batchSize=100):
+    def __init__(self, visibleDimensions, epochs=20, hiddenDimensions=50, ratingValues=6, learningRate=0.001, batchSize=100):
 
         self.visibleDimensions = visibleDimensions
         self.epochs = epochs
@@ -65,7 +65,7 @@ class RBM(object):
         vMask3D = tf.reshape(vMask, [tf.shape(v)[0], -1, self.ratingValues]) # Reshape into arrays of individual ratings
         vMask3D = tf.reduce_max(vMask3D, axis=[2], keepdims=True) # Use reduce_max to either give us 1 for ratings that exist, and 0 for missing ratings
         
-        # Extract rating vectors for each individual set of 10 rating binary values
+        # Extract rating vectors for each individual set of 6 rating binary values
         v = tf.reshape(v, [tf.shape(v)[0], -1, self.ratingValues])
         vProb = tf.nn.softmax(v * vMask3D) # Apply softmax activation function
         vProb = tf.reshape(vProb, [tf.shape(v)[0], -1]) # And shove them back into the flattened state. Reconstruction is done now.

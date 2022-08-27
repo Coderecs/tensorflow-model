@@ -5,12 +5,13 @@ from RBM import RBM
 
 class RBMAlgorithm(AlgoBase):
 
-    def __init__(self, epochs=20, hiddenDim=100, learningRate=0.001, batchSize=100, sim_options={}):
+    def __init__(self, epochs=20, hiddenDim=100, learningRate=0.001, batchSize=100, sim_options={}, ratings = 6):
         AlgoBase.__init__(self)
         self.epochs = epochs
         self.hiddenDim = hiddenDim
         self.learningRate = learningRate
         self.batchSize = batchSize
+        self.rating_values = ratings
         
     def softmax(self, x):
         return np.exp(x) / np.sum(np.exp(x), axis=0)
@@ -21,7 +22,7 @@ class RBMAlgorithm(AlgoBase):
         self.numUsers = trainset.n_users
         self.numItems = trainset.n_items
         self.predictedRatings = np.full((self.numUsers, self.numItems), fill_value = np.float32(-1))
-        self.trainingMatrix = np.zeros([self.numUsers, self.numItems, 11], dtype=np.float32)
+        self.trainingMatrix = np.zeros([self.numUsers, self.numItems, self.rating_values], dtype=np.float32)
         
         for (uid, iid, rating) in trainset.all_ratings():
             # adjustedRating = int(float(rating)*2.0) - 1
@@ -42,7 +43,7 @@ class RBMAlgorithm(AlgoBase):
         #     if (uiid % 50 == 0):
         #         print("Processing user ", uiid)
         recs = self.rbm.GetRecommendations([self.trainingMatrix[uiid]])
-        recs = np.reshape(recs, [self.numItems, 11])
+        recs = np.reshape(recs, [self.numItems, self.rating_values])
         
         for itemID, rec in enumerate(recs):
             # The obvious thing would be to just take the rating with the highest score:                
@@ -51,7 +52,7 @@ class RBMAlgorithm(AlgoBase):
             # The paper suggests performing normalization over K values to get probabilities
             # and take the expectation as your prediction, so we'll do that instead:
             normalized = self.softmax(rec)
-            rating = np.average(np.arange(11), weights=normalized)
+            rating = np.average(np.arange(self.rating_values), weights=normalized)
             self.predictedRatings[uiid, itemID] = (rating)
         
         return self
