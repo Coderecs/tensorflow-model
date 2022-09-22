@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_restful import Resource, Api
+from model.RBMBakeOff import model
 # End of imports
 
 
@@ -11,7 +12,10 @@ api = Api(app)
 class RBM(Resource):
     def get(self):
         # call the function here with required parameters
-        return jsonify({"data": "Recommendations"})
+        rbm = model()
+        rbm.train_model()
+        recs = rbm.recs('harasees_singh', 5)
+        return jsonify({"recommendations": recs})
 
 api.add_resource(RBM, '/rbm')
 

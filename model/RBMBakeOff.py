@@ -14,7 +14,7 @@ def de_hash(hash_val):
         index += '1'
     elif offset % 3 == 2:
         index += '2'
-    return contest, index
+    return [contest, index]
 
 def LoadProblemLensData():
     ml = ProblemLens()
@@ -47,7 +47,6 @@ class model(object):
 		self.RBM.fit(trainset)
 
 	def recs(self, testSubject, k):
-
 		print("Computing recommendations...")
 		testSet = self.dataset.GetAntiTestSetForUser(testSubject)
 
@@ -64,8 +63,12 @@ class model(object):
 
 		recommendations.sort(key=lambda x: x[1], reverse=True)
 
+		li = []
 		for ratings in recommendations[:k]:
-		    print(de_hash(ratings[0]))
+			li.append(de_hash(ratings[0]))
+			print(de_hash(ratings[0]))
+
+		return li
 # Fight!
 # Only to evaluate perfomance
 # evaluator.Evaluate(True) 
